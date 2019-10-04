@@ -1,14 +1,18 @@
+exception ParseError(string);
+
 type queryValue =
   | Single(string)
   | Multiple(array(string));
+
+type queryObj = Belt.Map.String.t(queryValue);
 
 /**
  * encodeURIComponent won't encode: - _ . ! ~ * ' ( )
  * according to https://tools.ietf.org/html/rfc3986#page-13
  * unreserved characters: - _ . ~
  * reserved: ! * ( ) '
- * thus JS doesn't cover ! * ( ) ', so we will help it.
- *  */
+ * JS doesn't cover ! * ( ) ', so we will help it.
+ */
 let encode = value =>
   Js.Global.encodeURIComponent(value)
   |> Js.String.replaceByRe([%re "/\!/"], "%21")
@@ -17,64 +21,61 @@ let encode = value =>
   |> Js.String.replaceByRe([%re "/\*/"], "%2A")
   |> Js.String.replaceByRe([%re "/\'/"], "%27");
 
+let encodePair = (key, value) => encode(key) ++ "=" ++ encode(value);
+
+let itemToQueryString = ((key, item)) =>
+  switch (item) {
+  | Single(value) => encodePair(key, value)
+  | Multiple(values) =>
+    values->Belt.Array.map(value => encodePair(key, value))
+    |> Js.Array.joinWith("&")
+  };
+
 module Stringify = {
   let string = val_ => Single(val_);
   let array = arr => Multiple(arr);
 
-  let encodePair = (key, value) => encode(key) ++ "=" ++ encode(value);
-
-  let itemToQs = (key, item) =>
-    switch (item) {
-    | Single(value) => encodePair(key, value)
-    | Multiple(values) =>
-      values->Belt.Array.map(value => encodePair(key, value))
-      |> Js.Array.joinWith("&")
-    };
-
   let make = (params: array((string, queryValue))) =>
-    params->Belt.Array.map(((key, item)) => itemToQs(key, item))
-    |> Js.Array.joinWith("&");
+    params->Belt.Array.map(itemToQueryString) |> Js.Array.joinWith("&");
+};
 
-  let addToPath = (~path, ~qs) => {
-    switch (qs) {
-    | "" => path
-    | q => {j|$path?$q|j}
-    };
+let addToPath = (~path, ~qs) => {
+  switch (qs) {
+  | "" => path
+  | q => {j|$path?$q|j}
   };
 };
 
-module Parse = {
-  exception ParseError(string);
+/** parse */
 
-  type queryObj = Belt_MapString.t(queryValue);
-
-  let addToMap = (map, keyValue) => {
-    switch (Js.String.split("=", keyValue)) {
-    | [|"", ""|] => map
-    | [|key, encodedValue|] =>
-      let value = Js.Global.decodeURIComponent(encodedValue);
-      switch (map->Belt_MapString.get(key)) {
-      | None => map->Belt_MapString.set(key, Single(value))
-      | Some(Single(singleVal)) =>
-        map->Belt_MapString.set(key, Multiple([|singleVal, value|]))
+let addToMap = (map, keyValue) => {
+  switch (Js.String.split("=", keyValue)) {
+  | [|"", ""|] => map
+  | [|key, encodedValue|] =>
+    let valueToAdd = Js.Global.decodeURIComponent(encodedValue);
+    let newValue =
+      switch (map->Belt.Map.String.get(key)) {
+      | None => Single(valueToAdd)
+      | Some(Single(singleVal)) => Multiple([|singleVal, valueToAdd|])
       | Some(Multiple(multiVal)) =>
-        let arrayValue = Js.Array.concat([|value|], multiVal);
-        map->Belt_MapString.set(key, Multiple(arrayValue));
+        Multiple(multiVal->Belt.Array.concat([|valueToAdd|]))
       };
-    | _ => map
-    };
+    map->Belt.Map.String.set(key, newValue);
+  | _ => map
   };
+};
 
-  let parse = (query): queryObj => {
-    let queryMap = Belt_MapString.empty;
+let parse = (query): queryObj => {
+  let queryMap = Belt.Map.String.empty;
 
-    let pairs = Js.String.split("&", query);
-    Array.fold_left(addToMap, queryMap, pairs);
-  };
+  let pairs = Js.String.split("&", query);
+  Array.fold_left(addToMap, queryMap, pairs);
+};
 
+module Parse = {
   let string = (key, queryObj) => {
     queryObj
-    ->Belt_MapString.get(key)
+    ->Belt.Map.String.get(key)
     ->Belt.Option.map(item =>
         switch (item) {
         | Single(val_) => val_
@@ -87,7 +88,7 @@ module Parse = {
 
   let array = (key, queryObj) => {
     queryObj
-    ->Belt_MapString.get(key)
+    ->Belt.Map.String.get(key)
     ->Belt.Option.map(item =>
         switch (item) {
         | Single(val_) => [|val_|]

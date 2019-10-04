@@ -1,6 +1,7 @@
 open Jest;
 open Expect;
-type queryObj = {
+
+type testQueryObj = {
   query: option(string),
   array: option(array(string)),
 };
@@ -20,7 +21,7 @@ describe("query string utils", () => {
     expect(qs) |> toEqual("query=text&filter=name&array=a&array=b&array=c");
   });
 
-  test("stringify encodes special characters", () => {
+  test("stringify encodes special characters correctly", () => {
     let qs =
       QueryString.Stringify.(
         make([|
@@ -37,29 +38,28 @@ describe("query string utils", () => {
 
   test("parse correctly decodes single and multiple values", () => {
     let qs = "query=text&filter=name&array=a&array=b&array=c";
-    let queryObj =
-      QueryString.Parse.(
-        {
-          let map = parse(qs);
-          {query: map |> string("query"), array: map |> array("array")};
-        }
-      );
 
-    expect(queryObj)
+    let queryObj = QueryString.parse(qs);
+    let parsedObj =
+      QueryString.Parse.{
+        query: queryObj |> string("query"),
+        array: queryObj |> array("array"),
+      };
+
+    expect(parsedObj)
     |> toEqual({query: Some("text"), array: Some([|"a", "b", "c"|])});
   });
 
-  test("parse correctly decodes special characters", () => {
+  test("parse decodes special characters correctly", () => {
     let qs = "query=search%20%2A1%21%20-%2F0%27&array=%3B_%3D.%2C%2B&array=b~%28%29%5B%5B%5D";
-    let queryObj =
-      QueryString.Parse.(
-        {
-          let map = parse(qs);
-          {query: map |> string("query"), array: map |> array("array")};
-        }
-      );
+    let queryObj = QueryString.parse(qs);
+    let parsedObj =
+      QueryString.Parse.{
+        query: queryObj |> string("query"),
+        array: queryObj |> array("array"),
+      };
 
-    expect(queryObj)
+    expect(parsedObj)
     |> toEqual({
          query: Some("search *1! -/0'"),
          array: Some([|";_=.,+", "b~()[[]"|]),
