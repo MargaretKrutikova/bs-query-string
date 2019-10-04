@@ -36,6 +36,14 @@ describe("query string utils", () => {
        );
   });
 
+  test("stringify doesn't include empty arrays", () => {
+    let qs =
+      QueryString.Stringify.(
+        make([|("query", string("text")), ("array", array([||]))|])
+      );
+    expect(qs) |> toEqual("query=text");
+  });
+
   test("parse correctly decodes single and multiple values", () => {
     let qs = "query=text&filter=name&array=a&array=b&array=c";
 

@@ -36,7 +36,10 @@ module Stringify = {
   let array = arr => Multiple(arr);
 
   let make = (params: array((string, queryValue))) =>
-    params->Belt.Array.map(itemToQueryString) |> Js.Array.joinWith("&");
+    params
+    ->Belt.Array.map(itemToQueryString)
+    ->Belt.Array.keep(pair => pair != "")
+    |> Js.Array.joinWith("&");
 };
 
 let addToPath = (~path, ~qs) => {
