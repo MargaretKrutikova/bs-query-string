@@ -1,7 +1,13 @@
 open QueryTypes;
 
-type queryItem = (string, queryValue);
+type itemValue =
+  | Item(queryValue)
+  | Omit;
+
+type queryItem = (string, itemValue);
 type queryArray = array(queryItem);
+
+type encoder('a) = 'a => queryValue;
 
 /**
  * encodeURIComponent won't encode: - _ . ! ~ * ' ( )
@@ -22,20 +28,23 @@ let encodePair = (key, value) => encode(key) ++ "=" ++ encode(value);
 
 let itemToQueryString = ((key, item)) =>
   switch (item) {
-  | Single(value) => encodePair(key, value)
-  | Multiple(values) =>
-    values->Belt.Array.map(value => encodePair(key, value))
-    |> Js.Array.joinWith("&")
+  | Omit => ""
+  | Item(i) =>
+    switch (i) {
+    | Single(value) => encodePair(key, value)
+    | Multiple(values) =>
+      values->Belt.Array.map(value => encodePair(key, value))
+      |> Js.Array.joinWith("&")
+    }
   };
 
 let string = val_ => Single(val_);
 let array = arr => Multiple(arr);
 
-let add = (key, queryValue, queryArray) =>
-  queryArray->Belt.Array.concat([|(key, queryValue)|]);
+let item = (val_, encoder) => Item(encoder(val_));
 
-let addOptional = (key, queryValue, ~skip, queryArray) =>
-  skip ? queryArray : queryArray |> add(key, queryValue);
+let omit = (val_, encoder, shouldOmit) =>
+  shouldOmit(val_) ? Omit : item(val_, encoder);
 
 let toQs = (items: array(queryItem)) =>
   items
