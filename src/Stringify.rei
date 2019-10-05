@@ -5,7 +5,6 @@ type queryArray = array(queryItem);
 
 let encode: string => Js.String.t;
 
-let withPath: (~path: string, ~qs: string) => string;
 let toQs: queryArray => string;
 
 let string: string => queryValue;

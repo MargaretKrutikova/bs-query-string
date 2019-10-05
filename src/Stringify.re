@@ -42,10 +42,3 @@ let toQs = (items: array(queryItem)) =>
   ->Belt.Array.map(itemToQueryString)
   ->Belt.Array.keep(pair => pair != "")
   |> Js.Array.joinWith("&");
-
-let withPath = (~path, ~qs) => {
-  switch (qs) {
-  | "" => path
-  | q => {j|$path?$q|j}
-  };
-};
