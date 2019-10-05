@@ -6,6 +6,21 @@ Simple `reasonml` solution for dealing with query strings.
 
 Inspired by [`bs-json`](https://github.com/glennsl/bs-json), `BsQueryString.Parse` works similarly to `Json.Decode` and `BsQueryString.Stringify` similarly to `Json.Encode`.
 
+## Installation
+
+```sh
+npm i --save bs-query-string
+```
+
+Update your `bsconfig.json`:
+
+```diff
+"bs-dependencies": [
+  ...
++ "bs-query-string",
+]
+```
+
 ## Parse query string
 
 Example of parsing a query string into a record:
