@@ -13,4 +13,6 @@ let string: string => queryValue;
 let array: array(string) => queryValue;
 
 let item: ('a, encoder('a)) => itemValue;
+let optional: (option('a), encoder('a)) => itemValue;
+let withDefault: ('a, option('a), encoder('a)) => itemValue;
 let omit: ('a, encoder('a), 'a => bool) => itemValue;

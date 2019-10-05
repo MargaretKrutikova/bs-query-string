@@ -2,7 +2,7 @@ open QueryTypes;
 
 type itemValue =
   | Item(queryValue)
-  | Omit;
+  | Exclude;
 
 type queryItem = (string, itemValue);
 type queryArray = array(queryItem);
@@ -28,7 +28,7 @@ let encodePair = (key, value) => encode(key) ++ "=" ++ encode(value);
 
 let itemToQueryString = ((key, item)) =>
   switch (item) {
-  | Omit => ""
+  | Exclude => ""
   | Item(i) =>
     switch (i) {
     | Single(value) => encodePair(key, value)
@@ -43,8 +43,19 @@ let array = arr => Multiple(arr);
 
 let item = (val_, encoder) => Item(encoder(val_));
 
+let optional = (val_, encoder) =>
+  switch (val_) {
+  | None => Exclude
+  | Some(value) => item(value, encoder)
+  };
+
+let withDefault = (default, val_, encoder) => {
+  let value = val_->Belt.Option.getWithDefault(default);
+  item(value, encoder);
+};
+
 let omit = (val_, encoder, shouldOmit) =>
-  shouldOmit(val_) ? Omit : item(val_, encoder);
+  shouldOmit(val_) ? Exclude : item(val_, encoder);
 
 let toQs = (items: array(queryItem)) =>
   items

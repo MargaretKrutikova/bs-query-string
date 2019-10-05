@@ -37,6 +37,31 @@ describe("stringify", () => {
        );
   });
 
+  test("stringify skips optional item", () => {
+    let qs =
+      Stringify.(
+        toQs([|
+          ("query", item("text", string)),
+          ("filter", item("name", string)),
+          ("empty", optional(None, string)),
+        |])
+      );
+
+    expect(qs) |> toEqual("query=text&filter=name");
+  });
+
+  test("stringify uses default value", () => {
+    let qs =
+      Stringify.(
+        toQs([|
+          ("query", item("text", string)),
+          ("filter", withDefault("default", None, string)),
+        |])
+      );
+
+    expect(qs) |> toEqual("query=text&filter=default");
+  });
+
   test("stringify allows to omit item", () => {
     let value = "";
     let isEmpty = v => v == "";
