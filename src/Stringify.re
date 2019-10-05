@@ -12,10 +12,10 @@ type queryArray = array(queryItem);
  */
 let encode = value =>
   Js.Global.encodeURIComponent(value)
-  |> Js.String.replaceByRe([%re "/\!/"], "%21")
-  |> Js.String.replaceByRe([%re "/\(/"], "%28")
-  |> Js.String.replaceByRe([%re "/\)/"], "%29")
-  |> Js.String.replaceByRe([%re "/\*/"], "%2A")
+  |> Js.String.replaceByRe([%re "/\\!/"], "%21")
+  |> Js.String.replaceByRe([%re "/\\(/"], "%28")
+  |> Js.String.replaceByRe([%re "/\\)/"], "%29")
+  |> Js.String.replaceByRe([%re "/\\*/"], "%2A")
   |> Js.String.replaceByRe([%re "/\'/"], "%27");
 
 let encodePair = (key, value) => encode(key) ++ "=" ++ encode(value);
