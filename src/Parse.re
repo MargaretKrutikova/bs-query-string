@@ -3,7 +3,7 @@ open QueryTypes;
 exception ParseError(string);
 
 type queryObj = Belt.Map.String.t(queryValue);
-type parser('a) = queryValue => 'a;
+type parser('a) = string => 'a;
 
 let addToMap = (map, keyValue) => {
   switch (Js.String.split("=", keyValue)) {
@@ -29,33 +29,37 @@ let toQueryObj = (query): queryObj => {
   Array.fold_left(addToMap, queryMap, pairs);
 };
 
-let item = (key, parse, queryObj) => {
+let item = (key, queryObj: queryObj) => {
   switch (queryObj->Belt.Map.String.get(key)) {
-  | Some(value) => parse(value)
+  | Some(value) => value
   | None =>
     raise(ParseError("Value with key: " ++ key ++ ", is not present"))
   };
 };
 
-let string: parser(string) =
-  queryValue => {
-    switch (queryValue) {
-    | Single(val_) => val_
-    | Multiple(array) =>
-      let strArray = array |> Js.Json.stringArray |> Js.Json.stringify;
-      raise(ParseError("Expected single value, got " ++ strArray));
-    };
+let single = (key, parse: parser('a), queryObj) => {
+  switch (queryObj |> item(key)) {
+  | Single(val_) => parse(val_)
+  | Multiple(array) =>
+    let strArray = array |> Js.Json.stringArray |> Js.Json.stringify;
+    raise(
+      ParseError(
+        "Expected single value, for key '" ++ key ++ "', got " ++ strArray,
+      ),
+    );
   };
+};
 
-let array: parser(array(string)) =
-  queryValue => {
-    switch (queryValue) {
-    | Single(val_) => [|val_|]
-    | Multiple(array) => array
-    };
+let array = (key, parse: parser('a), queryObj) => {
+  switch (queryObj |> item(key)) {
+  | Single(val_) => [|parse(val_)|]
+  | Multiple(array) => array->Belt.Array.map(parse)
   };
+};
 
-let optional = (parse, queryObj) =>
+let string: parser(string) = queryValue => queryValue;
+
+let optional = (parse: queryObj => 'a, queryObj: queryObj): option('a) =>
   try (Some(queryObj |> parse)) {
   | ParseError(_) => None
   };
@@ -64,3 +68,6 @@ let withDefault = (default, parse, queryObj) =>
   try (queryObj |> parse) {
   | _ => default
   };
+
+let withEmptyArray = (key, parse, queryObj) =>
+  withDefault([||], array(key, parse), queryObj);
