@@ -59,6 +59,11 @@ let array = (key, parse: parser('a), queryObj) => {
 
 let string: parser(string) = queryValue => queryValue;
 
+let parseSafe = (parse: parser('a), qs) =>
+  try (Some(qs |> parse)) {
+  | _ => None
+  };
+
 let optional = (parse: queryObj => 'a, queryObj: queryObj): option('a) =>
   try (Some(queryObj |> parse)) {
   | ParseError(_) => None

@@ -15,3 +15,5 @@ let optional: (queryObj => 'a, queryObj) => option('a);
 
 let withDefault: ('a, queryObj => 'a, queryObj) => 'a;
 let withEmptyArray: (string, parser('a), queryObj) => array('a);
+
+let parseSafe: (parser('a), string) => option('a);

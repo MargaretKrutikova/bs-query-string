@@ -19,7 +19,7 @@
     "test": "npm run build && jest"
   },
   "devDependencies": {
-    "@glennsl/bs-jest": "^0.4.9",
+    "@glennsl/bs-jest": "^0.5.1",
     "bs-platform": "^5.0.6"
   }
 }
