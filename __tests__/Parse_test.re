@@ -25,6 +25,19 @@ describe("parse", () => {
     expect(parsedObj) |> toEqual({query: "text", array: [|"a", "b", "c"|]});
   });
 
+  test("parse ignores question mark in the beginning", () => {
+    let qs = "?query=text&&array=a&array=b&array=c";
+
+    let queryObj = Parse.toQueryObj(qs);
+    let parsedObj =
+      Parse.{
+        query: queryObj |> item("query", string),
+        array: queryObj |> item("array", array),
+      };
+
+    expect(parsedObj) |> toEqual({query: "text", array: [|"a", "b", "c"|]});
+  });
+
   test("decodes special characters correctly", () => {
     let qs = "query=search%20%2A1%21%20-%2F0%27&array=%3B_%3D.%2C%2B&array=b~%28%29%5B%5B%5D";
     let queryObj = Parse.toQueryObj(qs);
