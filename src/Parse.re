@@ -22,10 +22,13 @@ let addToMap = (map, keyValue) => {
   };
 };
 
+let removeTrailingQuestionMark = (str: string) =>
+  str |> Js.String.replaceByRe([%re "/^\\?/"], "");
+
 let toQueryObj = (query): queryObj => {
   let queryMap = Belt.Map.String.empty;
 
-  let pairs = Js.String.split("&", query);
+  let pairs = query |> removeTrailingQuestionMark |> Js.String.split("&");
   Array.fold_left(addToMap, queryMap, pairs);
 };
 
