@@ -1,5 +1,7 @@
 # bs-query-string
 
+[![NPM](https://img.shields.io/npm/v/bs-query-string.svg)](https://www.npmjs.com/package/bs-query-string)
+
 Simple `reasonml` solution for dealing with query strings.
 
 ---
